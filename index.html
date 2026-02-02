@@ -30,7 +30,7 @@
     .buttons {
       position: relative;
       width: 100%;
-      height: 200px;
+      height: 300px;
     }
 
     button {
@@ -47,21 +47,23 @@
     #yesBtn {
       background-color: #ff4d94;
       color: white;
-      left: 50%;
-      transform: translateX(-120%);
+      left: 40%;
+      top: 100px;
+      z-index: 2;
     }
 
     #noBtn {
       background-color: #ddd;
       color: #333;
-      left: 50%;
-      transform: translateX(20%);
+      left: 60%;
+      top: 100px;
+      z-index: 1;
     }
   </style>
 </head>
 
 <body>
-  <h1>Mourine, will you be my Valentine? 💖</h1>
+  <h1>Will you be my Valentine? 💖</h1>
 
   <div class="buttons">
     <button id="yesBtn">Yes 💕</button>
@@ -75,29 +77,41 @@
     let yesScale = 1;
     let noScale = 1;
 
-    function moveNoButton() {
-      const maxX = window.innerWidth - noBtn.offsetWidth;
-      const maxY = window.innerHeight - noBtn.offsetHeight;
+    function randomNoPosition() {
+      const padding = 10; // minimum distance from edges
+      const maxX = window.innerWidth - noBtn.offsetWidth - padding;
+      const maxY = window.innerHeight - noBtn.offsetHeight - padding;
 
-      const randomX = Math.random() * maxX;
-      const randomY = Math.random() * maxY;
+      let newX, newY;
+      let yesRect = yesBtn.getBoundingClientRect();
 
-      noBtn.style.left = `${randomX}px`;
-      noBtn.style.top = `${randomY}px`;
+      do {
+        newX = Math.random() * maxX;
+        newY = Math.random() * maxY;
+      } while (
+        newX + noBtn.offsetWidth > yesRect.left &&
+        newX < yesRect.right &&
+        newY + noBtn.offsetHeight > yesRect.top &&
+        newY < yesRect.bottom
+      ); 
+      // Repeat if NO overlaps YES
+
+      noBtn.style.left = `${newX}px`;
+      noBtn.style.top = `${newY}px`;
     }
 
     noBtn.addEventListener("click", () => {
-      // YES grows
+      // YES grows slightly
       yesScale += 0.15;
       yesBtn.style.transform = `scale(${yesScale})`;
 
-      // NO shrinks
+      // NO shrinks slightly
       noScale -= 0.07;
       noScale = Math.max(noScale, 0.3);
       noBtn.style.transform = `scale(${noScale})`;
 
-      // NO runs away
-      moveNoButton();
+      // Move NO safely
+      randomNoPosition();
     });
 
     yesBtn.addEventListener("click", () => {
