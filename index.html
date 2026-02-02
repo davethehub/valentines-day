@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>💘 Valentine Question</title>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #ffe6f0;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: #b30059;
+      margin-bottom: 2rem;
+      padding: 0 1rem;
+    }
+
+    .buttons {
+      position: relative;
+      width: 100%;
+      height: 200px;
+    }
+
+    button {
+      position: absolute;
+      font-size: 1.2rem;
+      padding: 0.9rem 1.6rem;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      touch-action: manipulation;
+    }
+
+    #yesBtn {
+      background-color: #ff4d94;
+      color: white;
+      left: 50%;
+      transform: translateX(-120%);
+    }
+
+    #noBtn {
+      background-color: #ddd;
+      color: #333;
+      left: 50%;
+      transform: translateX(20%);
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Will you be my Valentine? 💖</h1>
+
+  <div class="buttons">
+    <button id="yesBtn">Yes 💕</button>
+    <button id="noBtn">No 😢</button>
+  </div>
+
+  <script>
+    const yesBtn = document.getElementById("yesBtn");
+    const noBtn = document.getElementById("noBtn");
+
+    let yesScale = 1;
+    let noScale = 1;
+
+    function moveNoButton() {
+      const maxX = window.innerWidth - noBtn.offsetWidth;
+      const maxY = window.innerHeight - noBtn.offsetHeight;
+
+      const randomX = Math.random() * maxX;
+      const randomY = Math.random() * maxY;
+
+      noBtn.style.left = `${randomX}px`;
+      noBtn.style.top = `${randomY}px`;
+    }
+
+    noBtn.addEventListener("click", () => {
+      // YES grows
+      yesScale += 0.15;
+      yesBtn.style.transform = `scale(${yesScale})`;
+
+      // NO shrinks
+      noScale -= 0.07;
+      noScale = Math.max(noScale, 0.3);
+      noBtn.style.transform = `scale(${noScale})`;
+
+      // NO runs away
+      moveNoButton();
+    });
+
+    yesBtn.addEventListener("click", () => {
+      document.body.innerHTML = `
+        <h1>YAY!! 💘🥰</h1>
+        <p style="font-size:1.3rem;">I knew you'd say yes 💞</p>
+      `;
+    });
+  </script>
+</body>
+</html>
