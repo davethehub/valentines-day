@@ -1,125 +1,151 @@
-<!-- redeploy -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>💘 Valentine Question</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>💘 Valentine Question</title>
 
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #ffe6f0;
-      text-align: center;
-      overflow: hidden;
-    }
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #ffe6f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
+  }
 
-    h1 {
-      font-size: 2rem;
-      color: #b30059;
-      margin-bottom: 2rem;
-      padding: 0 1rem;
-    }
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 90%;
+    max-width: 500px;
+  }
 
-    .buttons {
-      position: relative;
-      width: 100%;
-      height: 300px;
-    }
+  h1 {
+    font-size: 2rem;
+    color: #b30059;
+    margin-bottom: 2rem;
+  }
 
-    button {
-      position: absolute;
-      font-size: 1.2rem;
-      padding: 0.9rem 1.6rem;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      transition: transform 0.2s ease;
-      touch-action: manipulation;
-    }
+  .buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    position: relative;
+    width: 100%;
+    height: 200px;
+  }
 
-    #yesBtn {
-      background-color: #ff4d94;
-      color: white;
-      left: 40%;
-      top: 100px;
-      z-index: 2;
-    }
+  button {
+    padding: 0.8rem 1.6rem;
+    border-radius: 12px;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    touch-action: manipulation;
+    position: absolute;
+  }
 
-    #noBtn {
-      background-color: #ddd;
-      color: #333;
-      left: 60%;
-      top: 100px;
-      z-index: 1;
-    }
-  </style>
+  #yesBtn {
+    background-color: #ff4d94;
+    color: white;
+    z-index: 2;
+  }
+
+  #noBtn {
+    background-color: #ddd;
+    color: #333;
+    z-index: 1;
+  }
+</style>
 </head>
 
 <body>
+<div class="container">
   <h1>Will you be my Valentine? 💖</h1>
-
   <div class="buttons">
     <button id="yesBtn">Yes 💕</button>
     <button id="noBtn">No 😢</button>
   </div>
+</div>
 
-  <script>
-    const yesBtn = document.getElementById("yesBtn");
-    const noBtn = document.getElementById("noBtn");
+<script>
+const yesBtn = document.getElementById("yesBtn");
+const noBtn = document.getElementById("noBtn");
 
-    let yesScale = 1;
-    let noScale = 1;
+let yesScale = 1;
+let noScale = 1;
 
-    function randomNoPosition() {
-      const padding = 10; // minimum distance from edges
-      const maxX = window.innerWidth - noBtn.offsetWidth - padding;
-      const maxY = window.innerHeight - noBtn.offsetHeight - padding;
+// Center buttons initially
+function centerButtons() {
+  const container = document.querySelector('.buttons');
+  yesBtn.style.left = (container.offsetWidth/4 - yesBtn.offsetWidth/2) + "px";
+  yesBtn.style.top = (container.offsetHeight/2 - yesBtn.offsetHeight/2) + "px";
+  noBtn.style.left = (container.offsetWidth*3/4 - noBtn.offsetWidth/2) + "px";
+  noBtn.style.top = (container.offsetHeight/2 - noBtn.offsetHeight/2) + "px";
+}
 
-      let newX, newY;
-      let yesRect = yesBtn.getBoundingClientRect();
+// Safe NO random position without overlapping YES
+function randomNoPosition() {
+  const container = document.querySelector('.buttons');
+  const padding = 5; // minimum distance from edges
+  const maxX = container.offsetWidth - noBtn.offsetWidth - padding;
+  const maxY = container.offsetHeight - noBtn.offsetHeight - padding;
 
-      do {
-        newX = Math.random() * maxX;
-        newY = Math.random() * maxY;
-      } while (
-        newX + noBtn.offsetWidth > yesRect.left &&
-        newX < yesRect.right &&
-        newY + noBtn.offsetHeight > yesRect.top &&
-        newY < yesRect.bottom
-      ); 
-      // Repeat if NO overlaps YES
+  const yesRect = yesBtn.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
 
-      noBtn.style.left = `${newX}px`;
-      noBtn.style.top = `${newY}px`;
-    }
+  let newX, newY;
+  let attempts = 0;
 
-    noBtn.addEventListener("click", () => {
-      // YES grows slightly
-      yesScale += 0.15;
-      yesBtn.style.transform = `scale(${yesScale})`;
+  do {
+    newX = Math.random() * maxX;
+    newY = Math.random() * maxY;
+    attempts++;
+    if (attempts > 100) break; // fallback in case space is too small
+  } while (
+    newX + noBtn.offsetWidth > yesBtn.offsetLeft &&
+    newX < yesBtn.offsetLeft + yesBtn.offsetWidth &&
+    newY + noBtn.offsetHeight > yesBtn.offsetTop &&
+    newY < yesBtn.offsetTop + yesBtn.offsetHeight
+  );
 
-      // NO shrinks slightly
-      noScale -= 0.07;
-      noScale = Math.max(noScale, 0.3);
-      noBtn.style.transform = `scale(${noScale})`;
+  noBtn.style.left = newX + "px";
+  noBtn.style.top = newY + "px";
+}
 
-      // Move NO safely
-      randomNoPosition();
-    });
+// Initial centering
+window.addEventListener('load', centerButtons);
+window.addEventListener('resize', centerButtons);
 
-    yesBtn.addEventListener("click", () => {
-      document.body.innerHTML = `
-        <h1>YAY!! 💘🥰</h1>
-        <p style="font-size:1.3rem;">I knew you'd say yes 💞</p>
-      `;
-    });
-  </script>
+noBtn.addEventListener("click", () => {
+  // YES grows
+  yesScale += 0.15;
+  yesBtn.style.transform = `scale(${yesScale})`;
+
+  // NO shrinks
+  noScale -= 0.07;
+  noScale = Math.max(noScale, 0.3);
+  noBtn.style.transform = `scale(${noScale})`;
+
+  // Move NO safely
+  randomNoPosition();
+});
+
+yesBtn.addEventListener("click", () => {
+  document.body.innerHTML = `
+    <h1>YAY!! 💘🥰</h1>
+    <p style="font-size:1.3rem;">I knew you'd say yes 💞</p>
+  `;
+});
+</script>
 </body>
 </html>
