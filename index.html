@@ -288,24 +288,30 @@ noBtn.addEventListener("click", () => {
 
   // Start moving on first click
   if (!hasStartedMoving) {
-    noBtn.classList.add('moving');
-    hasStartedMoving = true;
-    
-    // Get current position
+    // Get current position before switching to fixed
     const rect = getRect(noBtn);
     x = rect.left;
     y = rect.top;
-  }
-
-  // Randomize position and velocity
-  randomizeNoPosition();
-  randomizeVelocity();
-
-  // Start animation
-  if (!hasStartedMoving) {
+    
+    // Switch to fixed positioning
+    noBtn.classList.add('moving');
+    
+    // Set initial position immediately
+    noBtn.style.left = `${x}px`;
+    noBtn.style.top = `${y}px`;
+    
     hasStartedMoving = true;
+    
+    // Randomize velocity for first bounce
+    randomizeVelocity();
+    
+    // Start the animation loop
+    animateNo();
+  } else {
+    // On subsequent clicks, randomize position and velocity
+    randomizeNoPosition();
+    randomizeVelocity();
   }
-  animateNo();
 });
 
 /* YES click */
