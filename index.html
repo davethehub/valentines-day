@@ -16,16 +16,14 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    text-align: center;
     overflow: hidden;
   }
 
   .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    text-align: center;
     width: 90%;
     max-width: 500px;
+    position: relative;
   }
 
   h1 {
@@ -36,8 +34,8 @@
 
   .buttons {
     position: relative;
-    width: 100%;
     height: 200px;
+    width: 100%;
   }
 
   button {
@@ -48,8 +46,8 @@
     font-size: 1.1rem;
     cursor: pointer;
     transition: transform 0.2s ease;
-    touch-action: manipulation;
     white-space: nowrap;
+    touch-action: manipulation;
   }
 
   #yesBtn {
@@ -64,10 +62,9 @@
     z-index: 1;
   }
 
-  /* Mobile layout */
   @media (max-width: 600px) {
     .buttons {
-      height: 120px;
+      height: 140px;
     }
   }
 </style>
@@ -75,7 +72,7 @@
 
 <body>
 <div class="container">
-  <h1>Will you be my Valentine? 💖</h1>
+  <h1 id="question">Mourine, will you be my Valentine? 💖</h1>
 
   <div class="buttons">
     <button id="yesBtn">Yes 💕</button>
@@ -86,70 +83,84 @@
 <script>
 const yesBtn = document.getElementById("yesBtn");
 const noBtn = document.getElementById("noBtn");
-const container = document.querySelector(".buttons");
+const container = document.querySelector(".container");
+const buttons = document.querySelector(".buttons");
+const heading = document.getElementById("question");
 
 let yesScale = 1;
 let noScale = 1;
 
-/* Sad message progression (no repeats) */
+/* Sad message progression */
 const noMessages = [
   "why did you click me 😐",
-  "hey… please don’t do that",
+  "hey… please don’t",
   "ok stop 😕",
-  "i’m getting nervous now",
-  "this doesn’t feel very nice",
-  "i’m going to run away now",
-  "you’re actually making me sad",
-  "this is really hurting my feelings",
-  "i don’t feel good anymore",
-  "i think i’m depressed now 😭"
+  "i’m getting nervous",
+  "this hurts a little",
+  "i’m going to run now",
+  "you’re making me sad",
+  "this really hurts",
+  "i feel awful",
+  "i’m depressed now 😭"
 ];
 let noMessageIndex = 0;
 
-/* Center buttons based on screen size */
+/* Initial button positioning */
 function centerButtons() {
-  const isMobile = window.innerWidth <= 600;
+  const centerY = buttons.offsetHeight / 2;
 
-  const centerY = container.offsetHeight / 2;
-
-  if (isMobile) {
-    yesBtn.style.left = `calc(50% - ${yesBtn.offsetWidth + 10}px)`;
-    noBtn.style.left = `calc(50% + 10px)`;
-  } else {
-    yesBtn.style.left = `${container.offsetWidth * 0.25 - yesBtn.offsetWidth / 2}px`;
-    noBtn.style.left = `${container.offsetWidth * 0.75 - noBtn.offsetWidth / 2}px`;
-  }
+  yesBtn.style.left = `${buttons.offsetWidth * 0.25 - yesBtn.offsetWidth / 2}px`;
+  noBtn.style.left = `${buttons.offsetWidth * 0.75 - noBtn.offsetWidth / 2}px`;
 
   yesBtn.style.top = `${centerY - yesBtn.offsetHeight / 2}px`;
   noBtn.style.top = `${centerY - noBtn.offsetHeight / 2}px`;
 }
 
-/* Move NO to a random visible spot without overlapping YES */
-function moveNoSafely() {
-  const padding = 10;
-  const maxX = container.offsetWidth - noBtn.offsetWidth - padding;
-  const maxY = container.offsetHeight - noBtn.offsetHeight - padding;
+/* Helper: check overlap between two DOMRects */
+function overlaps(a, b) {
+  return !(
+    a.right < b.left ||
+    a.left > b.right ||
+    a.bottom < b.top ||
+    a.top > b.bottom
+  );
+}
 
-  let x, y;
-  let attempts = 0;
+/* Move NO anywhere on screen safely */
+function moveNoSafely() {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const padding = 10;
+
+  const yesRect = yesBtn.getBoundingClientRect();
+  const h1Rect = heading.getBoundingClientRect();
+
+  let x, y, attempts = 0;
 
   do {
-    x = Math.random() * maxX;
-    y = Math.random() * maxY;
+    x = Math.random() * (viewportWidth - noBtn.offsetWidth - padding * 2) + padding;
+    y = Math.random() * (viewportHeight - noBtn.offsetHeight - padding * 2) + padding;
+
+    const noRect = {
+      left: x,
+      right: x + noBtn.offsetWidth,
+      top: y,
+      bottom: y + noBtn.offsetHeight
+    };
+
     attempts++;
-    if (attempts > 100) break;
+    if (attempts > 150) break;
+
   } while (
-    x < yesBtn.offsetLeft + yesBtn.offsetWidth &&
-    x + noBtn.offsetWidth > yesBtn.offsetLeft &&
-    y < yesBtn.offsetTop + yesBtn.offsetHeight &&
-    y + noBtn.offsetHeight > yesBtn.offsetTop
+    overlaps(noRect, yesRect) ||
+    overlaps(noRect, h1Rect)
   );
 
   noBtn.style.left = `${x}px`;
   noBtn.style.top = `${y}px`;
 }
 
-/* NO button behavior */
+/* NO button click */
 noBtn.addEventListener("click", () => {
   // YES grows
   yesScale += 0.15;
@@ -159,24 +170,23 @@ noBtn.addEventListener("click", () => {
   noScale = Math.max(noScale - 0.07, 0.3);
   noBtn.style.transform = `scale(${noScale})`;
 
-  // Update NO text (no repeats)
+  // Update NO text
   if (noMessageIndex < noMessages.length) {
-    noBtn.textContent = noMessages[noMessageIndex];
-    noMessageIndex++;
+    noBtn.textContent = noMessages[noMessageIndex++];
   }
 
   moveNoSafely();
 });
 
-/* YES button behavior */
+/* YES click */
 yesBtn.addEventListener("click", () => {
   document.body.innerHTML = `
-    <h1 style="color:#b30059;">YAY!! 💘🥰</h1>
-    <p style="font-size:1.3rem;">I knew you'd say yes 💞</p>
+    <h1 style="color:#b30059; text-align:center;">YAY!! 💘🥰</h1>
+    <p style="font-size:1.3rem; text-align:center;">I knew you'd say yes 💞</p>
   `;
 });
 
-/* Initial setup */
+/* Init */
 window.addEventListener("load", centerButtons);
 window.addEventListener("resize", centerButtons);
 </script>
