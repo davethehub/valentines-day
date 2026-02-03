@@ -6,6 +6,10 @@
 <title>💘 Valentine Question</title>
 
 <style>
+  * {
+    box-sizing: border-box;
+  }
+  
   html, body {
     margin: 0;
     padding: 0;
@@ -17,22 +21,29 @@
   }
 
   .container {
-    position: relative;
-    width: 100%;
-    height: 100%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     text-align: center;
+    width: 90%;
+    max-width: 600px;
   }
 
   h1 {
-    margin-top: 40px;
-    font-size: 2rem;
+    margin: 0 0 40px 0;
+    font-size: clamp(1.5rem, 5vw, 2rem);
     color: #b30059;
+    line-height: 1.3;
   }
 
   .buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
     position: relative;
-    margin-top: 40px;
-    height: 80px;
+    height: 60px;
   }
 
   button {
@@ -44,20 +55,29 @@
     white-space: nowrap;
     transition: transform 0.2s ease;
     touch-action: manipulation;
+    font-weight: 500;
   }
 
   #yesBtn {
     background-color: #ff4d94;
     color: white;
-    margin-right: 20px;
+    position: relative;
     z-index: 2;
+  }
+
+  #yesBtn:hover {
+    background-color: #ff3385;
   }
 
   #noBtn {
     background-color: #ddd;
     color: #333;
-    z-index: 1;
     position: absolute;
+    z-index: 1;
+  }
+
+  #noBtn.moving {
+    position: fixed;
   }
 </style>
 </head>
@@ -83,15 +103,15 @@ let noScale = 1;
 
 const noMessages = [
   "why did you click me 😐",
-  "hey… please don’t",
+  "hey… please don't",
   "ok stop 😕",
-  "i’m getting nervous",
-  "this doesn’t feel good",
-  "i’m running away now",
-  "you’re making me sad",
+  "i'm getting nervous",
+  "this doesn't feel good",
+  "i'm running away now",
+  "you're making me sad",
   "this really hurts",
   "i feel awful",
-  "i’m depressed 😭"
+  "i'm depressed 😭"
 ];
 let noMessageIndex = 0;
 
@@ -101,55 +121,56 @@ let y = 0;
 let vx = 0;
 let vy = 0;
 
-/* Initial side-by-side positioning */
-function positionButtonsInitially() {
-  const rowRect = buttonRow.getBoundingClientRect();
-
-  const yesX = rowRect.width / 2 - yesBtn.offsetWidth - 10;
-  const noX = rowRect.width / 2 + 10;
-
-  yesBtn.style.position = "relative";
-
-  noBtn.style.left = `${noX}px`;
-  noBtn.style.top = `0px`;
+/* Get bounding box helper */
+function getRect(element) {
+  return element.getBoundingClientRect();
 }
 
-/* Overlap helper */
-function overlaps(a, b) {
+/* Overlap helper with padding */
+function overlaps(rect1, rect2, padding = 20) {
   return !(
-    a.right < b.left ||
-    a.left > b.right ||
-    a.bottom < b.top ||
-    a.top > b.bottom
+    rect1.right + padding < rect2.left ||
+    rect1.left - padding > rect2.right ||
+    rect1.bottom + padding < rect2.top ||
+    rect1.top - padding > rect2.bottom
   );
 }
 
 /* Random valid NO position */
 function randomizeNoPosition() {
-  const padding = 10;
-  const yesRect = yesBtn.getBoundingClientRect();
-  const h1Rect = heading.getBoundingClientRect();
+  const padding = 20;
+  const yesRect = getRect(yesBtn);
+  const h1Rect = getRect(heading);
+  
+  const maxWidth = window.innerWidth;
+  const maxHeight = window.innerHeight;
+  const btnWidth = noBtn.offsetWidth;
+  const btnHeight = noBtn.offsetHeight;
 
   let attempts = 0;
+  let validPosition = false;
 
-  do {
-    x = Math.random() * (window.innerWidth - noBtn.offsetWidth - padding * 2) + padding;
-    y = Math.random() * (window.innerHeight - noBtn.offsetHeight - padding * 2) + padding;
+  while (!validPosition && attempts < 300) {
+    x = padding + Math.random() * (maxWidth - btnWidth - padding * 2);
+    y = padding + Math.random() * (maxHeight - btnHeight - padding * 2);
 
     const noRect = {
       left: x,
-      right: x + noBtn.offsetWidth,
+      right: x + btnWidth,
       top: y,
-      bottom: y + noBtn.offsetHeight
+      bottom: y + btnHeight
     };
 
+    if (!overlaps(noRect, yesRect, 30) && !overlaps(noRect, h1Rect, 30)) {
+      validPosition = true;
+    }
+    
     attempts++;
-    if (attempts > 200) break;
+  }
 
-  } while (
-    overlaps(noRect, yesRect) ||
-    overlaps(noRect, h1Rect)
-  );
+  // Clamp to screen bounds
+  x = Math.max(padding, Math.min(x, maxWidth - btnWidth - padding));
+  y = Math.max(padding, Math.min(y, maxHeight - btnHeight - padding));
 
   noBtn.style.left = `${x}px`;
   noBtn.style.top = `${y}px`;
@@ -157,10 +178,53 @@ function randomizeNoPosition() {
 
 /* Random bounce direction */
 function randomizeVelocity() {
-  const speed = 2 + Math.random() * 1.5;
+  const speed = 3 + Math.random() * 2;
   const angle = Math.random() * Math.PI * 2;
   vx = Math.cos(angle) * speed;
   vy = Math.sin(angle) * speed;
+}
+
+/* Check collision and bounce */
+function checkCollision(rect1, rect2) {
+  if (overlaps(rect1, rect2, 0)) {
+    // Calculate centers
+    const center1X = (rect1.left + rect1.right) / 2;
+    const center1Y = (rect1.top + rect1.bottom) / 2;
+    const center2X = (rect2.left + rect2.right) / 2;
+    const center2Y = (rect2.top + rect2.bottom) / 2;
+    
+    // Bounce away from collision
+    const dx = center1X - center2X;
+    const dy = center1Y - center2Y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > 0) {
+      // Normalize and apply bounce
+      const nx = dx / distance;
+      const ny = dy / distance;
+      
+      // Reflect velocity
+      const dot = vx * nx + vy * ny;
+      vx = vx - 2 * dot * nx;
+      vy = vy - 2 * dot * ny;
+      
+      // Add slight speed increase for fun
+      const speedBoost = 1.05;
+      vx *= speedBoost;
+      vy *= speedBoost;
+      
+      // Cap maximum speed
+      const maxSpeed = 8;
+      const currentSpeed = Math.sqrt(vx * vx + vy * vy);
+      if (currentSpeed > maxSpeed) {
+        vx = (vx / currentSpeed) * maxSpeed;
+        vy = (vy / currentSpeed) * maxSpeed;
+      }
+      
+      return true;
+    }
+  }
+  return false;
 }
 
 /* DVD logo animation */
@@ -170,63 +234,114 @@ function animateNo() {
   x += vx;
   y += vy;
 
-  const noRect = noBtn.getBoundingClientRect();
-  const yesRect = yesBtn.getBoundingClientRect();
-  const h1Rect = heading.getBoundingClientRect();
+  const btnWidth = noBtn.offsetWidth;
+  const btnHeight = noBtn.offsetHeight;
+  const maxWidth = window.innerWidth;
+  const maxHeight = window.innerHeight;
 
-  /* Screen edges */
-  if (x <= 0 || x + noRect.width >= window.innerWidth) vx *= -1;
-  if (y <= 0 || y + noRect.height >= window.innerHeight) vy *= -1;
-
-  /* Bounce off YES */
-  if (overlaps(noRect, yesRect)) {
-    vx *= -1;
-    vy *= -1;
+  // Bounce off screen edges
+  if (x <= 0) {
+    x = 0;
+    vx = Math.abs(vx);
+  }
+  if (x + btnWidth >= maxWidth) {
+    x = maxWidth - btnWidth;
+    vx = -Math.abs(vx);
+  }
+  if (y <= 0) {
+    y = 0;
+    vy = Math.abs(vy);
+  }
+  if (y + btnHeight >= maxHeight) {
+    y = maxHeight - btnHeight;
+    vy = -Math.abs(vy);
   }
 
-  /* Bounce off H1 */
-  if (overlaps(noRect, h1Rect)) {
-    vy *= -1;
-  }
-
+  // Update position for collision detection
   noBtn.style.left = `${x}px`;
   noBtn.style.top = `${y}px`;
+
+  const noRect = getRect(noBtn);
+  const yesRect = getRect(yesBtn);
+  const h1Rect = getRect(heading);
+
+  // Check collisions with YES button and heading
+  checkCollision(noRect, yesRect);
+  checkCollision(noRect, h1Rect);
 
   requestAnimationFrame(animateNo);
 }
 
 /* NO click */
 noBtn.addEventListener("click", () => {
+  // Shrink NO button
   noScale = Math.max(noScale - 0.07, 0.3);
   noBtn.style.transform = `scale(${noScale})`;
 
+  // Grow YES button
   yesScale += 0.15;
   yesBtn.style.transform = `scale(${yesScale})`;
 
+  // Update message
   if (noMessageIndex < noMessages.length) {
     noBtn.textContent = noMessages[noMessageIndex++];
   }
 
+  // Start moving on first click
+  if (!hasStartedMoving) {
+    noBtn.classList.add('moving');
+    hasStartedMoving = true;
+    
+    // Get current position
+    const rect = getRect(noBtn);
+    x = rect.left;
+    y = rect.top;
+  }
+
+  // Randomize position and velocity
   randomizeNoPosition();
   randomizeVelocity();
 
+  // Start animation
   if (!hasStartedMoving) {
     hasStartedMoving = true;
-    animateNo();
   }
+  animateNo();
 });
 
 /* YES click */
 yesBtn.addEventListener("click", () => {
   document.body.innerHTML = `
-    <h1 style="text-align:center; color:#b30059;">YAY!! 💘🥰</h1>
-    <p style="text-align:center; font-size:1.3rem;">I knew you'd say yes 💞</p>
+    <div style="
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      width: 90%;
+      max-width: 600px;
+    ">
+      <h1 style="margin: 0 0 20px 0; color: #b30059; font-size: clamp(1.8rem, 6vw, 2.5rem);">
+        YAY!! 💘🥰
+      </h1>
+      <p style="margin: 0; font-size: clamp(1.1rem, 4vw, 1.3rem); color: #b30059;">
+        I knew you'd say yes 💞
+      </p>
+    </div>
   `;
 });
 
-/* Init */
-window.addEventListener("load", positionButtonsInitially);
-window.addEventListener("resize", positionButtonsInitially);
+/* Handle window resize */
+let resizeTimeout;
+window.addEventListener("resize", () => {
+  if (hasStartedMoving) {
+    // Recalculate position to stay within bounds
+    const btnWidth = noBtn.offsetWidth;
+    const btnHeight = noBtn.offsetHeight;
+    x = Math.max(20, Math.min(x, window.innerWidth - btnWidth - 20));
+    y = Math.max(20, Math.min(y, window.innerHeight - btnHeight - 20));
+  }
+});
 </script>
 </body>
 </html>
