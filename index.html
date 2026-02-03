@@ -141,10 +141,14 @@ function randomizeNoPosition() {
   const yesRect = getRect(yesBtn);
   const h1Rect = getRect(heading);
   
-  const maxWidth = window.innerWidth;
-  const maxHeight = window.innerHeight;
-  const btnWidth = noBtn.offsetWidth;
-  const btnHeight = noBtn.offsetHeight;
+  // Use document dimensions for accurate viewport size
+  const maxWidth = document.documentElement.clientWidth;
+  const maxHeight = document.documentElement.clientHeight;
+  
+  // Get actual rendered button dimensions (accounts for scaling)
+  const rect = noBtn.getBoundingClientRect();
+  const btnWidth = rect.width;
+  const btnHeight = rect.height;
 
   let attempts = 0;
   let validPosition = false;
@@ -187,13 +191,18 @@ function randomizeVelocity() {
 function animateNo() {
   if (!hasStartedMoving) return;
 
+  // Update position first
   x += vx;
   y += vy;
 
-  const btnWidth = noBtn.offsetWidth;
-  const btnHeight = noBtn.offsetHeight;
-  const maxWidth = window.innerWidth;
-  const maxHeight = window.innerHeight;
+  // Get actual rendered dimensions (accounts for scaling)
+  const rect = noBtn.getBoundingClientRect();
+  const btnWidth = rect.width;
+  const btnHeight = rect.height;
+  
+  // Use document dimensions for accurate viewport size
+  const maxWidth = document.documentElement.clientWidth;
+  const maxHeight = document.documentElement.clientHeight;
 
   // Bounce off screen edges
   if (x <= 0) {
@@ -213,7 +222,7 @@ function animateNo() {
     vy = -Math.abs(vy);
   }
 
-  // Update position
+  // Apply position
   noBtn.style.left = `${x}px`;
   noBtn.style.top = `${y}px`;
 
@@ -289,11 +298,18 @@ yesBtn.addEventListener("click", () => {
 let resizeTimeout;
 window.addEventListener("resize", () => {
   if (hasStartedMoving) {
+    // Get actual rendered button dimensions
+    const rect = noBtn.getBoundingClientRect();
+    const btnWidth = rect.width;
+    const btnHeight = rect.height;
+    
+    // Use document dimensions
+    const maxWidth = document.documentElement.clientWidth;
+    const maxHeight = document.documentElement.clientHeight;
+    
     // Recalculate position to stay within bounds
-    const btnWidth = noBtn.offsetWidth;
-    const btnHeight = noBtn.offsetHeight;
-    x = Math.max(20, Math.min(x, window.innerWidth - btnWidth - 20));
-    y = Math.max(20, Math.min(y, window.innerHeight - btnHeight - 20));
+    x = Math.max(20, Math.min(x, maxWidth - btnWidth - 20));
+    y = Math.max(20, Math.min(y, maxHeight - btnHeight - 20));
   }
 });
 </script>
