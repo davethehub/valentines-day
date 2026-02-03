@@ -35,23 +35,21 @@
   }
 
   .buttons {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
     position: relative;
     width: 100%;
     height: 200px;
   }
 
   button {
+    position: absolute;
     padding: 0.8rem 1.6rem;
     border-radius: 12px;
     border: none;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     cursor: pointer;
     transition: transform 0.2s ease;
     touch-action: manipulation;
-    position: absolute;
+    white-space: nowrap;
   }
 
   #yesBtn {
@@ -65,12 +63,20 @@
     color: #333;
     z-index: 1;
   }
+
+  /* Mobile layout */
+  @media (max-width: 600px) {
+    .buttons {
+      height: 120px;
+    }
+  }
 </style>
 </head>
 
 <body>
 <div class="container">
-  <h1>Mourine, will you be my Valentine? 💖</h1>
+  <h1>Will you be my Valentine? 💖</h1>
+
   <div class="buttons">
     <button id="yesBtn">Yes 💕</button>
     <button id="noBtn">No 😢</button>
@@ -80,72 +86,99 @@
 <script>
 const yesBtn = document.getElementById("yesBtn");
 const noBtn = document.getElementById("noBtn");
+const container = document.querySelector(".buttons");
 
 let yesScale = 1;
 let noScale = 1;
 
-// Center buttons initially
+/* Sad message progression (no repeats) */
+const noMessages = [
+  "why did you click me 😐",
+  "hey… please don’t do that",
+  "ok stop 😕",
+  "i’m getting nervous now",
+  "this doesn’t feel very nice",
+  "i’m going to run away now",
+  "you’re actually making me sad",
+  "this is really hurting my feelings",
+  "i don’t feel good anymore",
+  "i think i’m depressed now 😭"
+];
+let noMessageIndex = 0;
+
+/* Center buttons based on screen size */
 function centerButtons() {
-  const container = document.querySelector('.buttons');
-  yesBtn.style.left = (container.offsetWidth/4 - yesBtn.offsetWidth/2) + "px";
-  yesBtn.style.top = (container.offsetHeight/2 - yesBtn.offsetHeight/2) + "px";
-  noBtn.style.left = (container.offsetWidth*3/4 - noBtn.offsetWidth/2) + "px";
-  noBtn.style.top = (container.offsetHeight/2 - noBtn.offsetHeight/2) + "px";
+  const isMobile = window.innerWidth <= 600;
+
+  const centerY = container.offsetHeight / 2;
+
+  if (isMobile) {
+    yesBtn.style.left = `calc(50% - ${yesBtn.offsetWidth + 10}px)`;
+    noBtn.style.left = `calc(50% + 10px)`;
+  } else {
+    yesBtn.style.left = `${container.offsetWidth * 0.25 - yesBtn.offsetWidth / 2}px`;
+    noBtn.style.left = `${container.offsetWidth * 0.75 - noBtn.offsetWidth / 2}px`;
+  }
+
+  yesBtn.style.top = `${centerY - yesBtn.offsetHeight / 2}px`;
+  noBtn.style.top = `${centerY - noBtn.offsetHeight / 2}px`;
 }
 
-// Safe NO random position without overlapping YES
-function randomNoPosition() {
-  const container = document.querySelector('.buttons');
-  const padding = 5; // minimum distance from edges
+/* Move NO to a random visible spot without overlapping YES */
+function moveNoSafely() {
+  const padding = 10;
   const maxX = container.offsetWidth - noBtn.offsetWidth - padding;
   const maxY = container.offsetHeight - noBtn.offsetHeight - padding;
 
-  const yesRect = yesBtn.getBoundingClientRect();
-  const containerRect = container.getBoundingClientRect();
-
-  let newX, newY;
+  let x, y;
   let attempts = 0;
 
   do {
-    newX = Math.random() * maxX;
-    newY = Math.random() * maxY;
+    x = Math.random() * maxX;
+    y = Math.random() * maxY;
     attempts++;
-    if (attempts > 100) break; // fallback in case space is too small
+    if (attempts > 100) break;
   } while (
-    newX + noBtn.offsetWidth > yesBtn.offsetLeft &&
-    newX < yesBtn.offsetLeft + yesBtn.offsetWidth &&
-    newY + noBtn.offsetHeight > yesBtn.offsetTop &&
-    newY < yesBtn.offsetTop + yesBtn.offsetHeight
+    x < yesBtn.offsetLeft + yesBtn.offsetWidth &&
+    x + noBtn.offsetWidth > yesBtn.offsetLeft &&
+    y < yesBtn.offsetTop + yesBtn.offsetHeight &&
+    y + noBtn.offsetHeight > yesBtn.offsetTop
   );
 
-  noBtn.style.left = newX + "px";
-  noBtn.style.top = newY + "px";
+  noBtn.style.left = `${x}px`;
+  noBtn.style.top = `${y}px`;
 }
 
-// Initial centering
-window.addEventListener('load', centerButtons);
-window.addEventListener('resize', centerButtons);
-
+/* NO button behavior */
 noBtn.addEventListener("click", () => {
   // YES grows
   yesScale += 0.15;
   yesBtn.style.transform = `scale(${yesScale})`;
 
   // NO shrinks
-  noScale -= 0.07;
-  noScale = Math.max(noScale, 0.3);
+  noScale = Math.max(noScale - 0.07, 0.3);
   noBtn.style.transform = `scale(${noScale})`;
 
-  // Move NO safely
-  randomNoPosition();
+  // Update NO text (no repeats)
+  if (noMessageIndex < noMessages.length) {
+    noBtn.textContent = noMessages[noMessageIndex];
+    noMessageIndex++;
+  }
+
+  moveNoSafely();
 });
 
+/* YES button behavior */
 yesBtn.addEventListener("click", () => {
   document.body.innerHTML = `
-    <h1>YAY!! 💘🥰</h1>
+    <h1 style="color:#b30059;">YAY!! 💘🥰</h1>
     <p style="font-size:1.3rem;">I knew you'd say yes 💞</p>
   `;
 });
+
+/* Initial setup */
+window.addEventListener("load", centerButtons);
+window.addEventListener("resize", centerButtons);
 </script>
 </body>
 </html>
