@@ -6,7 +6,7 @@ The page asks a simple question (customize as you like):
 **“Will you be my Valentine?”**
 
 - The **YES** button grows bigger each time NO is clicked
-- The **NO** button shrinks and playfully moves away
+- The **NO** button 'emotionally deteriorates each time it's clicked, with progressively sad dialogue, no repeats, synced with shrinking and fleeing
 - Fully **mobile-friendly** and **responsive**
 - Hosted for free using **GitHub Pages**
 
