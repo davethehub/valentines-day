@@ -9,8 +9,8 @@
   html, body {
     margin: 0;
     padding: 0;
-    height: 100%;
     width: 100%;
+    height: 100%;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background: #ffe6f0;
     overflow: hidden;
@@ -31,8 +31,8 @@
 
   .buttons {
     position: relative;
+    margin-top: 80px;
     height: 200px;
-    margin-top: 60px;
   }
 
   button {
@@ -42,8 +42,8 @@
     border: none;
     font-size: 1.1rem;
     cursor: pointer;
-    transition: transform 0.2s ease;
     white-space: nowrap;
+    transition: transform 0.2s ease;
     touch-action: manipulation;
   }
 
@@ -79,14 +79,14 @@ const heading = document.getElementById("question");
 let yesScale = 1;
 let noScale = 1;
 
-/* Sad messages */
+/* Sad messages (no repeats) */
 const noMessages = [
   "why did you click me 😐",
   "hey… please don’t",
   "ok stop 😕",
-  "i’m nervous now",
-  "this hurts",
-  "i’m running away",
+  "i’m getting nervous",
+  "this doesn’t feel good",
+  "i’m running away now",
   "you’re making me sad",
   "this really hurts",
   "i feel awful",
@@ -94,23 +94,22 @@ const noMessages = [
 ];
 let noMessageIndex = 0;
 
-/* Initial positions */
-let x = 100;
-let y = 300;
+/* Motion state */
+let hasStartedMoving = false;
+let x = 0;
+let y = 0;
+let vx = 0;
+let vy = 0;
 
-/* Velocity (DVD logo style) */
-let vx = 1.8;
-let vy = 1.6;
-
-/* Center YES button */
+/* Position YES button */
 function positionYes() {
   const centerX = window.innerWidth / 2 - yesBtn.offsetWidth / 2;
-  const centerY = 350;
+  const centerY = window.innerHeight * 0.45;
   yesBtn.style.left = `${centerX}px`;
   yesBtn.style.top = `${centerY}px`;
 }
 
-/* Collision check */
+/* Helper: overlap detection */
 function overlaps(a, b) {
   return !(
     a.right < b.left ||
@@ -120,8 +119,49 @@ function overlaps(a, b) {
   );
 }
 
-/* Animation loop */
+/* Pick a random valid NO position */
+function randomizeNoPosition() {
+  const padding = 10;
+  const yesRect = yesBtn.getBoundingClientRect();
+  const h1Rect = heading.getBoundingClientRect();
+
+  let attempts = 0;
+
+  do {
+    x = Math.random() * (window.innerWidth - noBtn.offsetWidth - padding * 2) + padding;
+    y = Math.random() * (window.innerHeight - noBtn.offsetHeight - padding * 2) + padding;
+
+    const noRect = {
+      left: x,
+      right: x + noBtn.offsetWidth,
+      top: y,
+      bottom: y + noBtn.offsetHeight
+    };
+
+    attempts++;
+    if (attempts > 150) break;
+
+  } while (
+    overlaps(noRect, yesRect) ||
+    overlaps(noRect, h1Rect)
+  );
+
+  noBtn.style.left = `${x}px`;
+  noBtn.style.top = `${y}px`;
+}
+
+/* Randomize bounce direction */
+function randomizeVelocity() {
+  const speed = 2 + Math.random() * 1.5;
+  const angle = Math.random() * Math.PI * 2;
+  vx = Math.cos(angle) * speed;
+  vy = Math.sin(angle) * speed;
+}
+
+/* Animation loop (DVD logo style) */
 function animateNo() {
+  if (!hasStartedMoving) return;
+
   x += vx;
   y += vy;
 
@@ -156,17 +196,22 @@ noBtn.addEventListener("click", () => {
   noScale = Math.max(noScale - 0.07, 0.3);
   noBtn.style.transform = `scale(${noScale})`;
 
-  // Speed up slightly
-  vx *= 1.15;
-  vy *= 1.15;
-
-  // YES grows
+  // Grow YES
   yesScale += 0.15;
   yesBtn.style.transform = `scale(${yesScale})`;
 
   // Update NO text
   if (noMessageIndex < noMessages.length) {
     noBtn.textContent = noMessages[noMessageIndex++];
+  }
+
+  // Start or reset motion
+  randomizeNoPosition();
+  randomizeVelocity();
+
+  if (!hasStartedMoving) {
+    hasStartedMoving = true;
+    animateNo();
   }
 });
 
@@ -179,10 +224,7 @@ yesBtn.addEventListener("click", () => {
 });
 
 /* Init */
-window.addEventListener("load", () => {
-  positionYes();
-  animateNo();
-});
+window.addEventListener("load", positionYes);
 window.addEventListener("resize", positionYes);
 </script>
 </body>
