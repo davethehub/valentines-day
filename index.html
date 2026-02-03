@@ -43,7 +43,7 @@
     align-items: center;
     gap: 20px;
     position: relative;
-    height: 60px;
+    min-height: 60px;
   }
 
   button {
@@ -61,7 +61,6 @@
   #yesBtn {
     background-color: #ff4d94;
     color: white;
-    position: relative;
     z-index: 2;
   }
 
@@ -72,12 +71,12 @@
   #noBtn {
     background-color: #ddd;
     color: #333;
-    position: absolute;
     z-index: 1;
   }
 
   #noBtn.moving {
     position: fixed;
+    display: block;
   }
 </style>
 </head>
