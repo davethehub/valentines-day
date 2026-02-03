@@ -62,6 +62,7 @@
     background-color: #ff4d94;
     color: white;
     z-index: 2;
+    transform-origin: center center;
   }
 
   #yesBtn:hover {
@@ -72,16 +73,32 @@
     background-color: #ddd;
     color: #333;
     z-index: 1;
+    transform-origin: center center;
   }
 
   #noBtn.moving {
     position: fixed;
     display: block;
   }
+  
+  #debug {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 12px;
+    z-index: 9999;
+    border-radius: 5px;
+  }
 </style>
 </head>
 
 <body>
+<div id="debug"></div>
+
 <div class="container">
   <h1 id="question">Mourine, will you be my Valentine? 💖</h1>
 
@@ -96,6 +113,7 @@ const yesBtn = document.getElementById("yesBtn");
 const noBtn = document.getElementById("noBtn");
 const heading = document.getElementById("question");
 const buttonRow = document.getElementById("buttonRow");
+const debug = document.getElementById("debug");
 
 let yesScale = 1;
 let noScale = 1;
@@ -191,7 +209,7 @@ function randomizeVelocity() {
 function animateNo() {
   if (!hasStartedMoving) return;
 
-  // Update position first
+  // Move position
   x += vx;
   y += vy;
 
@@ -204,27 +222,50 @@ function animateNo() {
   const maxWidth = document.documentElement.clientWidth;
   const maxHeight = document.documentElement.clientHeight;
 
-  // Bounce off screen edges
-  if (x <= 0) {
+  // Track bounces for debugging
+  let bounced = [];
+
+  // Check and bounce off LEFT edge
+  if (x < 0) {
     x = 0;
-    vx = Math.abs(vx);
+    vx = Math.abs(vx); // Force positive (move right)
+    bounced.push('LEFT');
   }
-  if (x + btnWidth >= maxWidth) {
+  
+  // Check and bounce off RIGHT edge
+  if (x + btnWidth > maxWidth) {
     x = maxWidth - btnWidth;
-    vx = -Math.abs(vx);
+    vx = -Math.abs(vx); // Force negative (move left)
+    bounced.push('RIGHT');
   }
-  if (y <= 0) {
+  
+  // Check and bounce off TOP edge
+  if (y < 0) {
     y = 0;
-    vy = Math.abs(vy);
+    vy = Math.abs(vy); // Force positive (move down)
+    bounced.push('TOP');
   }
-  if (y + btnHeight >= maxHeight) {
+  
+  // Check and bounce off BOTTOM edge
+  if (y + btnHeight > maxHeight) {
     y = maxHeight - btnHeight;
-    vy = -Math.abs(vy);
+    vy = -Math.abs(vy); // Force negative (move up)
+    bounced.push('BOTTOM');
   }
 
   // Apply position
   noBtn.style.left = `${x}px`;
   noBtn.style.top = `${y}px`;
+
+  // Debug info
+  debug.innerHTML = `
+    Viewport: ${maxWidth} x ${maxHeight}<br>
+    Button: ${btnWidth.toFixed(1)} x ${btnHeight.toFixed(1)}<br>
+    Position: ${x.toFixed(1)}, ${y.toFixed(1)}<br>
+    Velocity: ${vx.toFixed(2)}, ${vy.toFixed(2)}<br>
+    Scale: ${noScale.toFixed(2)}<br>
+    ${bounced.length > 0 ? 'BOUNCE: ' + bounced.join(', ') : ''}
+  `;
 
   requestAnimationFrame(animateNo);
 }
