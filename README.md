@@ -10,11 +10,6 @@ The page asks a simple question (customize as you like):
 - Fully **mobile-friendly** and **responsive**
 - Hosted for free using **GitHub Pages**
 
-## 🌐 Live Demo
-Once GitHub Pages is enabled, visit: 
-https://<your-username>.github.io/<repo-name>/ 
-
-
 ## 🛠 Tech Stack
 - HTML (structure)
 - CSS (styling & responsive layout)
@@ -25,7 +20,7 @@ https://<your-username>.github.io/<repo-name>/
 2. Go to **Settings → Pages**
 3. Set source to **main / root**
 4. Wait ~30–60 seconds
-5. Share the link ❤️
+5. Share the link ❤️ (repo must be set to public!)
 
 ## 📱 Mobile Support
 - Buttons appear side-by-side on mobile
