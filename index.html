@@ -183,49 +183,6 @@ function randomizeVelocity() {
   vy = Math.sin(angle) * speed;
 }
 
-/* Check collision and bounce */
-function checkCollision(rect1, rect2) {
-  if (overlaps(rect1, rect2, 0)) {
-    // Calculate centers
-    const center1X = (rect1.left + rect1.right) / 2;
-    const center1Y = (rect1.top + rect1.bottom) / 2;
-    const center2X = (rect2.left + rect2.right) / 2;
-    const center2Y = (rect2.top + rect2.bottom) / 2;
-    
-    // Bounce away from collision
-    const dx = center1X - center2X;
-    const dy = center1Y - center2Y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    if (distance > 0) {
-      // Normalize and apply bounce
-      const nx = dx / distance;
-      const ny = dy / distance;
-      
-      // Reflect velocity
-      const dot = vx * nx + vy * ny;
-      vx = vx - 2 * dot * nx;
-      vy = vy - 2 * dot * ny;
-      
-      // Add slight speed increase for fun
-      const speedBoost = 1.05;
-      vx *= speedBoost;
-      vy *= speedBoost;
-      
-      // Cap maximum speed
-      const maxSpeed = 8;
-      const currentSpeed = Math.sqrt(vx * vx + vy * vy);
-      if (currentSpeed > maxSpeed) {
-        vx = (vx / currentSpeed) * maxSpeed;
-        vy = (vy / currentSpeed) * maxSpeed;
-      }
-      
-      return true;
-    }
-  }
-  return false;
-}
-
 /* DVD logo animation */
 function animateNo() {
   if (!hasStartedMoving) return;
@@ -256,17 +213,9 @@ function animateNo() {
     vy = -Math.abs(vy);
   }
 
-  // Update position for collision detection
+  // Update position
   noBtn.style.left = `${x}px`;
   noBtn.style.top = `${y}px`;
-
-  const noRect = getRect(noBtn);
-  const yesRect = getRect(yesBtn);
-  const h1Rect = getRect(heading);
-
-  // Check collisions with YES button and heading
-  checkCollision(noRect, yesRect);
-  checkCollision(noRect, h1Rect);
 
   requestAnimationFrame(animateNo);
 }
