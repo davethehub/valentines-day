@@ -269,9 +269,17 @@ noBtn.addEventListener("click", () => {
     // Create a placeholder to maintain the flex layout
     const placeholder = document.createElement('div');
     placeholder.className = 'no-placeholder';
+
+    // Set placeholder width/height to match NO button (before scale)
     placeholder.style.width = `${rectBefore.width}px`;
     placeholder.style.height = `${rectBefore.height}px`;
-    
+
+    // Optional: set min-width/height to ensure flex doesn’t shrink it
+    placeholder.style.minWidth = `${rectBefore.width}px`;
+    placeholder.style.minHeight = `${rectBefore.height}px`;
+    placeholder.style.visibility = 'hidden';
+    placeholder.style.flexShrink = '0';
+
     // Insert placeholder where NO button was
     noBtn.parentNode.insertBefore(placeholder, noBtn);
     
