@@ -56,6 +56,7 @@
     transition: transform 0.2s ease;
     touch-action: manipulation;
     font-weight: 500;
+    user-select: none; /* Prevent text selection on clicks */
   }
 
   #yesBtn {
@@ -63,6 +64,7 @@
     color: white;
     z-index: 2;
     transform-origin: center center;
+    position: relative; /* Keep in flex flow */
   }
 
   #yesBtn:hover {
@@ -74,31 +76,27 @@
     color: #333;
     z-index: 1;
     transform-origin: center center;
+    position: relative; /* Keep in flex flow initially */
   }
 
   #noBtn.moving {
     position: fixed;
     display: block;
+    margin: 0;
+    transform-origin: top left;
   }
   
-  #debug {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    background: rgba(0,0,0,0.7);
-    color: white;
-    padding: 10px;
-    font-family: monospace;
-    font-size: 12px;
-    z-index: 9999;
-    border-radius: 5px;
+  /* Placeholder to maintain layout when NO button is removed */
+  .no-placeholder {
+    width: 0;
+    height: 0;
+    visibility: hidden;
+    flex-shrink: 0;
   }
 </style>
 </head>
 
 <body>
-<div id="debug"></div>
-
 <div class="container">
   <h1 id="question">Mourine, will you be my Valentine? 💖</h1>
 
@@ -113,7 +111,6 @@ const yesBtn = document.getElementById("yesBtn");
 const noBtn = document.getElementById("noBtn");
 const heading = document.getElementById("question");
 const buttonRow = document.getElementById("buttonRow");
-const debug = document.getElementById("debug");
 
 let yesScale = 1;
 let noScale = 1;
@@ -159,11 +156,11 @@ function randomizeNoPosition() {
   const yesRect = getRect(yesBtn);
   const h1Rect = getRect(heading);
   
-  // Use document dimensions for accurate viewport size
-  const maxWidth = document.documentElement.clientWidth;
-  const maxHeight = document.documentElement.clientHeight;
+  // Viewport is our physics container
+  const viewportWidth = document.documentElement.clientWidth;
+  const viewportHeight = document.documentElement.clientHeight;
   
-  // Get actual rendered button dimensions (accounts for scaling)
+  // Get actual button dimensions with scale
   const rect = noBtn.getBoundingClientRect();
   const btnWidth = rect.width;
   const btnHeight = rect.height;
@@ -172,8 +169,9 @@ function randomizeNoPosition() {
   let validPosition = false;
 
   while (!validPosition && attempts < 300) {
-    x = padding + Math.random() * (maxWidth - btnWidth - padding * 2);
-    y = padding + Math.random() * (maxHeight - btnHeight - padding * 2);
+    // Generate random position within viewport
+    x = padding + Math.random() * (viewportWidth - btnWidth - padding * 2);
+    y = padding + Math.random() * (viewportHeight - btnHeight - padding * 2);
 
     const noRect = {
       left: x,
@@ -182,6 +180,7 @@ function randomizeNoPosition() {
       bottom: y + btnHeight
     };
 
+    // Check if position overlaps with Yes button or H1
     if (!overlaps(noRect, yesRect, 30) && !overlaps(noRect, h1Rect, 30)) {
       validPosition = true;
     }
@@ -189,9 +188,9 @@ function randomizeNoPosition() {
     attempts++;
   }
 
-  // Clamp to screen bounds
-  x = Math.max(padding, Math.min(x, maxWidth - btnWidth - padding));
-  y = Math.max(padding, Math.min(y, maxHeight - btnHeight - padding));
+  // Clamp to viewport bounds
+  x = Math.max(padding, Math.min(x, viewportWidth - btnWidth - padding));
+  y = Math.max(padding, Math.min(y, viewportHeight - btnHeight - padding));
 
   noBtn.style.left = `${x}px`;
   noBtn.style.top = `${y}px`;
@@ -213,73 +212,48 @@ function animateNo() {
   x += vx;
   y += vy;
 
-  // Get actual rendered dimensions (accounts for scaling)
+  // Get viewport dimensions (the physics container)
+  const viewportWidth = document.documentElement.clientWidth;
+  const viewportHeight = document.documentElement.clientHeight;
+  
+  // Get actual button dimensions with scale applied
   const rect = noBtn.getBoundingClientRect();
   const btnWidth = rect.width;
   const btnHeight = rect.height;
-  
-  // Use document dimensions for accurate viewport size
-  const maxWidth = document.documentElement.clientWidth;
-  const maxHeight = document.documentElement.clientHeight;
 
-  // Track bounces for debugging
-  let bounced = [];
-
-  // Check and bounce off LEFT edge
+  // Bounce off LEFT edge (x = 0)
   if (x < 0) {
     x = 0;
-    vx = Math.abs(vx); // Force positive (move right)
-    bounced.push('LEFT');
+    vx = Math.abs(vx);
   }
   
-  // Check and bounce off RIGHT edge
-  if (x + btnWidth > maxWidth) {
-    x = maxWidth - btnWidth;
-    vx = -Math.abs(vx); // Force negative (move left)
-    bounced.push('RIGHT');
+  // Bounce off RIGHT edge
+  if (x + btnWidth > viewportWidth) {
+    x = viewportWidth - btnWidth;
+    vx = -Math.abs(vx);
   }
   
-  // Check and bounce off TOP edge
+  // Bounce off TOP edge (y = 0)
   if (y < 0) {
     y = 0;
-    vy = Math.abs(vy); // Force positive (move down)
-    bounced.push('TOP');
+    vy = Math.abs(vy);
   }
   
-  // Check and bounce off BOTTOM edge
-  if (y + btnHeight > maxHeight) {
-    y = maxHeight - btnHeight;
-    vy = -Math.abs(vy); // Force negative (move up)
-    bounced.push('BOTTOM');
+  // Bounce off BOTTOM edge
+  if (y + btnHeight > viewportHeight) {
+    y = viewportHeight - btnHeight;
+    vy = -Math.abs(vy);
   }
 
-  // Apply position
+  // Apply position in viewport coordinates
   noBtn.style.left = `${x}px`;
   noBtn.style.top = `${y}px`;
-
-  // Debug info
-  debug.innerHTML = `
-    Viewport: ${maxWidth} x ${maxHeight}<br>
-    Button: ${btnWidth.toFixed(1)} x ${btnHeight.toFixed(1)}<br>
-    Position: ${x.toFixed(1)}, ${y.toFixed(1)}<br>
-    Velocity: ${vx.toFixed(2)}, ${vy.toFixed(2)}<br>
-    Scale: ${noScale.toFixed(2)}<br>
-    ${bounced.length > 0 ? 'BOUNCE: ' + bounced.join(', ') : ''}
-  `;
 
   requestAnimationFrame(animateNo);
 }
 
 /* NO click */
 noBtn.addEventListener("click", () => {
-  // Shrink NO button
-  noScale = Math.max(noScale - 0.07, 0.3);
-  noBtn.style.transform = `scale(${noScale})`;
-
-  // Grow YES button
-  yesScale += 0.15;
-  yesBtn.style.transform = `scale(${yesScale})`;
-
   // Update message
   if (noMessageIndex < noMessages.length) {
     noBtn.textContent = noMessages[noMessageIndex++];
@@ -287,15 +261,39 @@ noBtn.addEventListener("click", () => {
 
   // Start moving on first click
   if (!hasStartedMoving) {
-    // Get current position before switching to fixed
-    const rect = getRect(noBtn);
-    x = rect.left;
-    y = rect.top;
+    // Get current viewport position BEFORE moving it
+    const rectBefore = noBtn.getBoundingClientRect();
+    
+    // Create a placeholder to maintain the flex layout
+    const placeholder = document.createElement('div');
+    placeholder.className = 'no-placeholder';
+    placeholder.style.width = `${rectBefore.width}px`;
+    placeholder.style.height = `${rectBefore.height}px`;
+    
+    // Insert placeholder where NO button was
+    noBtn.parentNode.insertBefore(placeholder, noBtn);
+    
+    // CRITICAL: Move button out of the transformed container
+    // The .container has transform: translate(-50%, -50%) which creates
+    // a new positioning context, so position:fixed won't use viewport!
+    document.body.appendChild(noBtn);
     
     // Switch to fixed positioning
     noBtn.classList.add('moving');
     
-    // Set initial position immediately
+    // Apply scale
+    noScale = Math.max(noScale - 0.07, 0.3);
+    noBtn.style.transform = `scale(${noScale})`;
+    
+    // Get button dimensions after scale
+    const rect = noBtn.getBoundingClientRect();
+    const btnWidth = rect.width;
+    const btnHeight = rect.height;
+    
+    // Use the position it had before (which was already in viewport coords)
+    x = rectBefore.left;
+    y = rectBefore.top;
+    
     noBtn.style.left = `${x}px`;
     noBtn.style.top = `${y}px`;
     
@@ -307,10 +305,18 @@ noBtn.addEventListener("click", () => {
     // Start the animation loop
     animateNo();
   } else {
-    // On subsequent clicks, randomize position and velocity
+    // Shrink NO button on subsequent clicks
+    noScale = Math.max(noScale - 0.07, 0.3);
+    noBtn.style.transform = `scale(${noScale})`;
+    
+    // Randomize position and velocity
     randomizeNoPosition();
     randomizeVelocity();
   }
+  
+  // Always grow YES button
+  yesScale += 0.15;
+  yesBtn.style.transform = `scale(${yesScale})`;
 });
 
 /* YES click */
@@ -336,21 +342,21 @@ yesBtn.addEventListener("click", () => {
 });
 
 /* Handle window resize */
-let resizeTimeout;
 window.addEventListener("resize", () => {
   if (hasStartedMoving) {
-    // Get actual rendered button dimensions
+    const viewportWidth = document.documentElement.clientWidth;
+    const viewportHeight = document.documentElement.clientHeight;
+    
     const rect = noBtn.getBoundingClientRect();
     const btnWidth = rect.width;
     const btnHeight = rect.height;
     
-    // Use document dimensions
-    const maxWidth = document.documentElement.clientWidth;
-    const maxHeight = document.documentElement.clientHeight;
+    // Keep button within viewport bounds
+    x = Math.max(0, Math.min(x, viewportWidth - btnWidth));
+    y = Math.max(0, Math.min(y, viewportHeight - btnHeight));
     
-    // Recalculate position to stay within bounds
-    x = Math.max(20, Math.min(x, maxWidth - btnWidth - 20));
-    y = Math.max(20, Math.min(y, maxHeight - btnHeight - 20));
+    noBtn.style.left = `${x}px`;
+    noBtn.style.top = `${y}px`;
   }
 });
 </script>
